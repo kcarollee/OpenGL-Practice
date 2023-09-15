@@ -12,7 +12,6 @@ void processInput(GLFWwindow* window);
 int main() {
 	// initialize the GLFW library
 	glfwInit();
-	
 	// setting the OpenGL version
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);

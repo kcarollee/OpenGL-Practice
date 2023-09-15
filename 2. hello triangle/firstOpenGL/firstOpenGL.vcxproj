@@ -72,8 +72,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>C:\Users\kcaro\Documents\OpenGL\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\Users\kcaro\Documents\OpenGL\libs;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(ProjectDir)\..\..\OpenGL\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(ProjectDir)\..\..\OpenGL\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -133,7 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\glad\src\glad.c" />
+    <ClCompile Include="..\..\OpenGL\src\glad.c" />
     <ClCompile Include="mainWindow.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
