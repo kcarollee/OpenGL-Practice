@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <../../3. shaders/firstOpenGL/shader_s.h>
 
 // function prototypes
 
@@ -47,18 +48,20 @@ int main() {
 	// register a callback function on the window that gets called whenever the window is resized
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	int nrAttributes;
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+	std::cout << "MAX NUMBER OF VERT ATTRIBS: " << nrAttributes << std::endl;
 
 	// vertices for our triangle
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f, // top right
-		0.5f, -0.5f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f, // bottom left
-		-0.5f, 0.5f, 0.0f // top left
-
+		// positions      // colors
+		0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
+		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f // top
 	};
 	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3 // second triangle
+		0, 1, 2, // first triangle
+		//1, 2, 3 // second triangle
 	};
 
 	// vertex array object: 
@@ -84,83 +87,27 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// copy the previously defined vert data into the buffer's memory
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
 	// set the vertex attribute pointers
 	// par: which vert attrib to configure (layout (location = 0)),
 	//		size of the vertex attribute (vec3 -> composed of 3 values)
 	//		specifies the type of data
 	//		specifies if we want the data to be normalized
 	//		stride: the space between consecutive vertex attributes. 
-	//			the next position data is located 3 times the size of a float away 
+	//			the next position data is located 6 times the size of a float away 
 	//		the offset of where the position data begins in the buffer. type void*
 
 	// which VBO a vertex attribute takes its data from: the VBO currently bound to GL_ARRAY_BUFFER 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0); // enable the vertex attribute; par: the vertex attribute location
+	// color attribute -> have to set the offset to (3 * sizeof(float))
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	
 
-	const char* vertexShaderSource = 
-		"#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-		"void main()\n"
-		"{\n"
-		" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-		"}\0";
-
-	// creating the shader object, referenced by an ID
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-	// attach the shader source code to the shader obj and compile the shader
-	// par: shd obj to compile to, how many strings we're passing, shader source code, null
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	// checking for compile-time errors 
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		infoLog[0] = '\0';
-	}
-	else std::cout << "VERTEX SHADER COMPILED SUCCESSFULLY" << std::endl;
-
-	const char* fragmentShaderSource =
-		"#version 330 core\n"
-		"out vec4 FragColor;\n"
-		"void main(){\n"
-		" FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-		"}\n";
-
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	// creating a SHADER PROGRAM OBJECT which links multiple shaders
-	// the shader program has to be activated when rendering objects
-
-	unsigned int shaderProgram;
-	// creates a program and returns the ID ref to the newly created program obj.
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	// every shader and rendering call after glUseProgram will now use this program obj
-	// glUseProgram(shaderProgram);
-
-	// delete the shader objects after linking them into the program object. they are no longer needed
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	// check if linking the shader program failed 
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR: SHADER LINKING FAILED\n" << infoLog << std::endl;
-	}
-	else std::cout << "SHADER LINK SUCCESSFUL" << std::endl;
+	Shader testShader("../../3. shaders/firstOpenGL/shaders/shader.vert", "../../3. shaders/firstOpenGL/shaders/shader.frag");
+	
 
 	// a simple render loop 
 	// check at the start of each loop if GLFW has been instructed to close
@@ -178,7 +125,15 @@ int main() {
 		// possible bits: GL_COLORBUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
+		// activate the shader first
+		testShader.use();
+		//glUseProgram(shaderProgram);
+
+		// setting the uniform 
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		testShader.setVec4("newColor", 0.0f, greenValue, 0.0f, 1.0f);
+
 		glBindVertexArray(VAO);
 
 		// par: primitive type, starting index, how many verts to draw
